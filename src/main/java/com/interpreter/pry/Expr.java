@@ -1,16 +1,12 @@
 package com.interpreter.pry;
 
-import jdk.incubator.vector.VectorOperators;
-
-import java.util.List;
 
 abstract class Expr {
  interface Visitor<R> {
  R visitBinaryExpr(Binary expr);
  R visitGroupingExpr(Grouping expr);
  R visitLiteralExpr(Literal expr);
-
- R visitTernaryExpression(Ternary expr);
+ R visitTernaryExpr(Ternary expr);
  R visitUnaryExpr(Unary expr);
  }
  abstract <R> R accept(Visitor<R> visitor);
@@ -68,5 +64,20 @@ abstract class Expr {
  final Token operator;
  final Expr right;
  }
- static class Ternary
+ static class Ternary extends Expr{
+
+  final Expr condition;
+  final Expr valid;
+  final Expr invalid;
+
+  Ternary(Expr condition, Expr valid, Expr invalid){
+   this.condition = condition;
+   this.valid = valid;
+   this.invalid = invalid;
+  }
+  @Override
+  <R> R accept(Visitor<R> visitor) {
+   return visitor.visitTernaryExpr(this);
+  }
+ }
 }
