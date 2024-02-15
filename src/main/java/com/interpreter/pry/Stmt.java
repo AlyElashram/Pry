@@ -5,8 +5,6 @@ abstract class Stmt {
  interface Visitor<R> {
  R visitExpressionStmt(Expression stmt);
  R visitPrintStmt(Print stmt);
-
- abstract <R> R accept(Visitor<R> visitor);
  }
  static class Expression extends Stmt {
  Expression(Expr expression) {

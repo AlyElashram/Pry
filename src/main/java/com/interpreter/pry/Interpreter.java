@@ -1,6 +1,7 @@
 package com.interpreter.pry;
+import java.util.*;
 
-public class Interpreter implements Expr.Visitor<Object>{
+public class Interpreter implements Expr.Visitor<Object>,Stmt.Visitor<Void>{
     @Override
     public Object visitBinaryExpr(Expr.Binary expr) {
         Object left = evaluate(expr.left);
@@ -84,8 +85,6 @@ public class Interpreter implements Expr.Visitor<Object>{
 
         Object condition = evaluate(expr.condition);
         return isTruthy(condition) ? evaluate(expr.valid) : evaluate(expr.invalid);
-
-
     }
 
     private Object evaluate(Expr expr) {
@@ -105,15 +104,15 @@ public class Interpreter implements Expr.Visitor<Object>{
         if (operand instanceof Double) return;
         throw new RunTimeError(operator, "Operand must be a number.");
     }
-    private void checkNumberOperands(Token operator,
-                                     Object left, Object right) {
+    private void checkNumberOperands(Token operator, Object left, Object right) {
         if (left instanceof Double && right instanceof Double) return;
         throw new RunTimeError(operator, "Operands must be numbers.");
     }
-    void interpret(Expr expression) {
+    void interpret(List<Stmt> statements) {
         try {
-            Object value = evaluate(expression);
-            System.out.println(stringify(value));
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
         } catch (RunTimeError error) {
             Pry.runtimeError(error);
         }
@@ -128,5 +127,19 @@ public class Interpreter implements Expr.Visitor<Object>{
             return text;
         }
         return object.toString();
+    }
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringify(value));
+        return null;
+    }
+    private void execute(Stmt stmt) {
+        stmt.accept(this);
     }
 }
