@@ -1,4 +1,5 @@
 # Default ignored files
 /shelf/
 /.idea/
-/target/
+./target/
+/target/classes/
