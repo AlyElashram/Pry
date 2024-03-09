@@ -1,0 +1,3 @@
+var a = nil;
+var b = " Mar3y";
+print a ? a+b : "sayed";

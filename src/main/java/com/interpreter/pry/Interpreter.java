@@ -2,6 +2,8 @@ package com.interpreter.pry;
 import java.util.*;
 
 public class Interpreter implements Expr.Visitor<Object>,Stmt.Visitor<Void>{
+    private Enviroment environment = new Enviroment();
+
     @Override
     public Object visitBinaryExpr(Expr.Binary expr) {
         Object left = evaluate(expr.left);
@@ -77,6 +79,17 @@ public class Interpreter implements Expr.Visitor<Object>,Stmt.Visitor<Void>{
     }
 
     @Override
+    public Object visitVariableExpr(Expr.Variable expr) {
+        return environment.get(expr.name);
+    }
+
+    @Override
+    public Object visitAssignExpr(Expr.Assign expr) {
+        Object value = evaluate(expr.value);
+        environment.assign(expr.name, value);
+        return value;
+    }
+    @Override
     public Object visitTernaryExpr(Expr.Ternary expr) {
 
         //Condition to be checked for truthiness
@@ -128,18 +141,59 @@ public class Interpreter implements Expr.Visitor<Object>,Stmt.Visitor<Void>{
         }
         return object.toString();
     }
+
+    @Override
+    public Void visitBlockStmt(Stmt.Block stmt) {
+        executeBlock(stmt.statements, new Enviroment(environment));
+        return null;
+    }
+
     @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.expression);
         return null;
     }
+
+    @Override
+    public Void visitIfStmt(Stmt.If stmt) {
+        if (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.thenBranch);
+        } else if (stmt.elseBranch != null) {
+            execute(stmt.elseBranch);
+        }
+        return null;
+    }
+
     @Override
     public Void visitPrintStmt(Stmt.Print stmt) {
         Object value = evaluate(stmt.expression);
         System.out.println(stringify(value));
         return null;
     }
+
+    @Override
+    public Void visitVarStmt(Stmt.Var stmt) {
+        Object value = null;
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer);
+        }
+        environment.define(stmt.name.lexeme, value);
+        return null;
+    }
+
     private void execute(Stmt stmt) {
         stmt.accept(this);
+    }
+    void executeBlock(List<Stmt> statements,
+                      Enviroment environment) {
+        Enviroment previous = this.environment;
+        try {
+            this.environment = environment;
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
+        } finally {
+            this.environment = previous;
+        }
     }
 }
