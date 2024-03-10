@@ -10,18 +10,49 @@ public class Parser {
         this.tokens = tokens;
     }
     private Expr expression() {
-        return ternary();
+        return assignment();
+    }
+    private Expr assignment() {
+        Expr expr = or();
+        if (match(EQUAL)) {
+            Token equals = previous();
+            Expr value = assignment();
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable) expr).name;
+                return new Expr.Assign(name, value);
+            }
+            error(equals, "Invalid assignment target.");
+        }
+        return expr;
+    }
+    private Expr or() {
+        Expr expr = and();
+        while (match(OR)) {
+            Token operator = previous();
+            Expr right = and();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+        return expr;
+    }
+    private Expr and() {
+        Expr expr = ternary();
+        while (match(AND)) {
+            Token operator = previous();
+            Expr right = equality();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+        return expr;
     }
     private Expr ternary(){
 
-        Expr expr = assignment();
+        Expr expr = equality();
         Expr valid = null;
         Expr invalid = null;
 
         while(match(QUESTION_MARK)){
-            valid = assignment();
+            valid = equality();
             if(match(COLON)){
-                invalid = assignment();
+                invalid = equality();
                 expr = new Expr.Ternary(expr,valid,invalid);
             }else{
                 throw error(peek(),"Ternary operator missing a colon");
@@ -34,19 +65,7 @@ public class Parser {
 
         return expr;
     }
-    private Expr assignment() {
-        Expr expr = equality();
-        if (match(EQUAL)) {
-            Token equals = previous();
-            Expr value = assignment();
-            if (expr instanceof Expr.Variable) {
-                Token name = ((Expr.Variable) expr).name;
-                return new Expr.Assign(name, value);
-            }
-            error(equals, "Invalid assignment target.");
-        }
-        return expr;
-    }
+
     private Expr equality() {
         Expr expr = comparison();
         while (match(BANG_EQUAL, EQUAL_EQUAL)) {
