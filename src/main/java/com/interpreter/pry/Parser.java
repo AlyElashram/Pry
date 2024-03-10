@@ -1,5 +1,6 @@
 package com.interpreter.pry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import static com.interpreter.pry.TokenType.*;
 public class Parser {
@@ -193,6 +194,7 @@ public class Parser {
         return new Stmt.Expression(expr);
     }
     private Stmt statement() {
+        if (match(FOR)) return forStatement();
         if (match(IF)) return ifStatement();
         if (match(PRINT)) return printStatement();
         if (match(WHILE)) return whileStatement();
@@ -252,5 +254,61 @@ public class Parser {
         consume(RIGHT_PAREN, "Expect ')' after condition.");
         Stmt body = statement();
         return new Stmt.While(condition, body);
+    }
+
+    private Stmt forStatement() {
+        consume(LEFT_PAREN, "Expect '(' after 'for'.");
+        Stmt initializer;
+
+        if (match(SEMICOLON)) {
+
+            // Initializer could be skipped (C style)
+            initializer = null;
+        } else if (match(VAR)) {
+
+            // Initializer is a var declaration
+            initializer = varDeclaration();
+        } else {
+
+            //Initializer could be an assignment or any other expression statement
+            initializer = expressionStatement();
+        }
+
+        Expr condition = null;
+
+        // Condition could be skipped (C Style)
+        if (!check(SEMICOLON)) {
+            condition = expression();
+        }
+        consume(SEMICOLON, "Expect ';' after loop condition.");
+
+        Expr increment = null;
+
+        // If we don't find a closing bracket then the increment expression is not ommited
+        if (!check(RIGHT_PAREN)) {
+            increment = expression();
+        }
+        consume(RIGHT_PAREN, "Expect ')' after for clauses.");
+        Stmt body = statement();
+
+        // Add the increment statement as another expression statement to the body
+        if (increment != null) {
+            body = new Stmt.Block(
+                    Arrays.asList(
+                            body,
+                            new Stmt.Expression(increment)
+                    ));
+        }
+
+        if (condition == null) condition = new Expr.Literal(true);
+
+        body = new Stmt.While(condition, body);
+
+        // If we have an initializer , wrap the while loop body in a block and execute the initializer once
+        if (initializer != null) {
+            body = new Stmt.Block(Arrays.asList(initializer, body));
+        }
+
+        return body;
     }
 }
