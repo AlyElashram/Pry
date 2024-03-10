@@ -1,9 +1,14 @@
 ## Grammar :
 #### program → statement* EOF ;
-#### statement → exprStmt | printStmt ;
+#### statement → exprStmt | ifStmt | printStmt | block ;
+#### ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;;
+#### block → "{" declaration* "}" ;
 #### exprStmt → expression ";" ;
 #### printStmt → "print" expression ";" ;
-#### expression → ternary ;
+#### expression → assignment ;
+#### assignment → IDENTIFIER "=" assignment | logic_or ;
+#### logic_or → logic_and ( "or" logic_and )* ;
+#### logic_and → ternary ( "and" ternary )* ;
 #### ternary -> equality (equality (?) equality (:) equality)* ;
 #### equality → comparison ( ( "!=" | "==" ) comparison )* ;
 #### comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
