@@ -1,10 +1,15 @@
 ## Grammar :
 #### program → statement* EOF ;
-#### statement → exprStmt | ifStmt | printStmt | block ;
-#### ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;;
-#### block → "{" declaration* "}" ;
+#### declaration → varDecl | statement ;
+#### varDecl → "var" IDENTIFIER ( "=" expression )? ";" ;
+#### statement → exprStmt| forStmt | printStmt| ifStmt | whileStmt | block ;
 #### exprStmt → expression ";" ;
+#### forStmt → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
 #### printStmt → "print" expression ";" ;
+#### ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;
+#### whileStmt → "while" "(" expression ")" statement ;
+#### block → "{" declaration* "}" ;
+
 #### expression → assignment ;
 #### assignment → IDENTIFIER "=" assignment | logic_or ;
 #### logic_or → logic_and ( "or" logic_and )* ;
