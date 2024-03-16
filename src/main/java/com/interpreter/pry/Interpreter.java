@@ -2,7 +2,8 @@ package com.interpreter.pry;
 import java.util.*;
 
 public class Interpreter implements Expr.Visitor<Object>,Stmt.Visitor<Void>{
-    private Enviroment environment = new Enviroment();
+    final Enviroment globals = new Enviroment();
+    private Enviroment environment = globals;
 
     @Override
     public Object visitBinaryExpr(Expr.Binary expr) {
@@ -57,6 +58,26 @@ public class Interpreter implements Expr.Visitor<Object>,Stmt.Visitor<Void>{
     @Override
     public Object visitGroupingExpr(Expr.Grouping expr) {
         return evaluate(expr.expression);
+    }
+
+    @Override
+    public Object visitCallExpr(Expr.Call expr) {
+        Object callee = evaluate(expr.callee);
+        List<Object> arguments = new ArrayList<>();
+        for (Expr argument : expr.arguments) {
+            arguments.add(evaluate(argument));
+        }
+        if (!(callee instanceof PryCallable)) {
+            throw new RunTimeError(expr.paren,
+                    "Can only call functions and classes.");
+        }
+        PryCallable function = (PryCallable)callee;
+        if (arguments.size() != function.arity()) {
+            throw new RunTimeError(expr.paren, "Expected " +
+                    function.arity() + " arguments but got " +
+                    arguments.size() + ".");
+        }
+        return function.call(this, arguments);
     }
 
     @Override
@@ -166,6 +187,15 @@ public class Interpreter implements Expr.Visitor<Object>,Stmt.Visitor<Void>{
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.expression);
         return null;
+    }
+
+    @Override
+    public Void visitFunctionStmt(Stmt.Function stmt) {
+
+        PryFunction function = new PryFunction(stmt);
+        environment.define(stmt.name.lexeme, function);
+        return null;
+
     }
 
     @Override
