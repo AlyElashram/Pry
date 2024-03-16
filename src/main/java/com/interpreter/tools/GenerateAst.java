@@ -3,11 +3,11 @@ import java.io.*;
 import java.util.*;
 public class GenerateAst {
     public static void main(String[] args) throws IOException {
-        if (args.length != 1) {
-            System.err.println("Usage: generate_ast <output directory>");
-            System.exit(64);
-        }
-        String outputDir = args[0];
+//        if (args.length != 1) {
+//            System.err.println("Usage: generate_ast <output directory>");
+//            System.exit(64);
+//        }
+        String outputDir = "src/main/java/com/interpreter/pry/";
         defineAst(outputDir, "Expr", Arrays.asList(
                 "Assign : Token name, Expr value",
                 "Ternary : Expr condition , Expr valid , Expr invalid",
@@ -25,6 +25,7 @@ public class GenerateAst {
                 "Function : Token name, List<Token> params, List<Stmt> body",
                 "If : Expr condition, Stmt thenBranch," + " Stmt elseBranch",
                 "Print : Expr expression",
+                "Return : Token keyword, Expr value",
                 "Var : Token name, Expr initializer",
                 "While : Expr condition, Stmt body"
         ));
