@@ -5,10 +5,12 @@ public class PryFunction implements PryCallable{
 
     private final Stmt.Function declaration;
     private final Enviroment closure;
+    private final boolean isInitializer;
 
-    PryFunction(Stmt.Function declaration, Enviroment closure) {
+    PryFunction(Stmt.Function declaration, Enviroment closure , boolean isInitializer) {
         this.declaration = declaration;
         this.closure = closure;
+        this.isInitializer = isInitializer;
     }
     @Override
     public Object call(Interpreter interpreter,
@@ -21,8 +23,10 @@ public class PryFunction implements PryCallable{
         try {
             interpreter.executeBlock(declaration.body, environment);
         } catch (Return returnValue) {
+            if (isInitializer) return closure.getAt(0, "this");
             return returnValue.value;
         }
+        if (isInitializer) return closure.getAt(0, "this");
         return null;
     }
     @Override
@@ -32,5 +36,11 @@ public class PryFunction implements PryCallable{
     @Override
     public String toString() {
         return "<fn " + declaration.name.lexeme + ">";
+    }
+
+    PryFunction bind(PryInstance instance) {
+        Enviroment environment = new Enviroment(closure);
+        environment.define("this", instance);
+        return new PryFunction(declaration, environment, isInitializer);
     }
 }

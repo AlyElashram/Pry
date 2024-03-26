@@ -198,7 +198,8 @@ public class Interpreter implements Expr.Visitor<Object>,Stmt.Visitor<Void>{
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
 
-        PryFunction function = new PryFunction(stmt, environment);
+        PryFunction function = new PryFunction(stmt, environment,
+                false);
         environment.define(stmt.name.lexeme, function);
         return null;
 
@@ -244,6 +245,46 @@ public class Interpreter implements Expr.Visitor<Object>,Stmt.Visitor<Void>{
             execute(stmt.body);
         }
         return null;
+    }
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        environment.define(stmt.name.lexeme, null);
+        Map<String, PryFunction> methods = new HashMap<>();
+        for (Stmt.Function method : stmt.methods) {
+            PryFunction function = new PryFunction(method, environment,
+                    method.name.lexeme.equals("init"));
+            methods.put(method.name.lexeme, function);
+        }
+        PryClass klass = new PryClass(stmt.name.lexeme, methods);
+        environment.assign(stmt.name, klass);
+        return null;
+    }
+    @Override
+    public Object visitGetExpr(Expr.Get expr) {
+        Object object = evaluate(expr.object);
+        if (object instanceof PryInstance) {
+            return ((PryInstance) object).get(expr.name);
+        }
+
+        throw new RunTimeError(expr.name,
+                "Only instances have properties.");
+    }
+    @Override
+    public Object visitSetExpr(Expr.Set expr) {
+        Object object = evaluate(expr.object);
+
+        if (!(object instanceof PryInstance)) {
+            throw new RunTimeError(expr.name,
+                    "Only instances have fields.");
+        }
+
+        Object value = evaluate(expr.value);
+        ((PryInstance)object).set(expr.name, value);
+        return value;
+    }
+    @Override
+    public Object visitThisExpr(Expr.This expr) {
+        return lookUpVariable(expr.keyword, expr);
     }
 
     private void execute(Stmt stmt) {
